@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<meta name="viewport" content="width=device-width">
+		<script>
+
+var shared_worker = new SharedWorker("shared-worker.js");
+var worker = new Worker('worker.js');
+
+window.onbeforeunload = function() {
+	shared_worker.port.postMessage({ type: "die" });
+};
+
+window.onload = function() {
+
+	document.querySelector("#button_ports_count").onclick = function() {
+		shared_worker.port.postMessage({ type: "get_ports_count" });
+	};
+
+	var div = document.querySelector("div");
+	var input = document.querySelector("input");
+
+	input.onkeyup = function(e) {
+		shared_worker.port.postMessage({
+			type: "broadcast",
+			value: e.target.value
+		});
+	};
+
+	shared_worker.port.onmessage = function(e) {
+		console.log(e);
+
+		if (!e.data) {
+			return;
+		}
+
+		switch (e.data.type) {
+			case "broadcast":
+				input.value = e.data.value;
+				break;
+
+			case "get_ports_count":
+				alert(e.data.value);
+				break;
+		}
+	};
+
+	shared_worker.port.onerror = function(e) {
+		console.log('Error received from shared_worker', e);
+	};
+
+	shared_worker.port.start();
+
+	worker.onmessage = function(e) {
+		alert(e.data);
+		console.log('Message received from worker');
+	}
+
+	document.querySelector("#button_woker_run").onclick = function() {
+		worker.postMessage([3, 4]);
+	};
+}
+
+		</script>
+	</head>
+	<body>
+
+	<button id="button_ports_count">SharedWorker ports count</button>
+	<button id="button_woker_run">Worker run</button>
+	<input/>
+	<div></div>
+
+	</body>
+</html>
