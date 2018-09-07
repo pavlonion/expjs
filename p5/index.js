@@ -1,22 +1,33 @@
-function Force(dx, dy) {
-
-	function F(d) {
-// 		d = abs(d)
-		return d == 0? 0 : 1/d - 1/(d*d);
-	}
-
-// 	function sign(d) {
-// 		return d == 0 ? 1 : -(d/-d);
-// 	}
-
-// 	this.x = sign(dx) * F(dx) || 0.0;
-// 	this.y = sign(dy) * F(dy) || 0.0;
-	this.x = F(dx) || 0.0;
-	this.y = F(dy) || 0.0;
+function Force(a1, a2) {
+	this.x = 0;
+	this.y = 0;
 
 	this.add = function(force) {
-		this.x += force.x;
-		this.y += force.y;
+		this.x -= force.x;
+		this.y -= force.y;
+	};
+
+	if (arguments.length == 2) {
+		var dx = a2.x - a1.x;
+		var dy = a2.y - a1.y;
+		var d = Math.sqrt(dx*dx + dy*dy);
+
+		var sin_a = dx/d;
+		var sin_b = 1 - sin_a;
+
+// 		console.log(sin_a, sin_b);
+
+		var f = d == 0 ? 0 : 1/d - 1/(d*d);
+		var fy = f * sin_a;
+		var fx = f * sin_b;
+
+		function sign(v) {
+			return v == 0 ? 1 : -(v/-v);
+		}
+
+		this.x = sign(dx) * Math.abs(fx);
+		this.y = sign(dy) * Math.abs(fy);
+// 		console.log(dx, dy, d, f, this);
 	}
 }
 
@@ -45,8 +56,9 @@ function Athom(x, y) {
 		stroke(255);
 		ellipse(this.x, this.y, _d, _d);
 		stroke(0, 255, 0);
-		line(this.x, this.y, this.x + _force.x * 100, this.y + _force.y * 100);
-		text(this.id, this.x, this.y);
+		line(this.x, this.y, this.x + _force.x * 1000, this.y + _force.y * 1000);
+		stroke(0, 255, 255);
+		text(this.id, this.x + 3, this.y - 3);
 	};
 
 	this.push = function(force) {
@@ -58,9 +70,7 @@ function Athom(x, y) {
 			return;
 		}
 
-		var dx = athom.x - this.x;
-		var dy = athom.y - this.y;
-		var force = new Force(dx, dy);
+		var force = new Force(this, athom);
 		_force.add(force);
 	};
 
@@ -96,6 +106,7 @@ var WIGHT = 800;
 var HEIGHT = 600;
 
 function setup() {
+// 	frameRate(10);
 	view.setup(WIGHT, HEIGHT);
 
 	for (var i = 0; i < 2; ++i) {
